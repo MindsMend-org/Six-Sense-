@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f0e7">
+  <meta name="description" content="An open, playful experiment: learn six colour codes, lock a prediction, and see how it compares with chance.">
+  <title>Six Sense Lab | An open experiment</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --paper: #f3f0e7;
+      --ink: #17231f;
+      --muted: #64716b;
+      --rule: #c9cec4;
+      --green: #165c45;
+      --green-dark: #0e4434;
+      --red: #c33c32;
+      --gold: #efbd45;
+      --card: #fffdf6;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --serif: Georgia, "Times New Roman", serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(#8c978522 .7px, transparent .7px);
+      background-size: 8px 8px;
+      font-family: "Trebuchet MS", "Gill Sans", sans-serif;
+      line-height: 1.5;
+    }
+    button, input { font: inherit; }
+    button { color: inherit; }
+    .shell { max-width: 1160px; margin: 0 auto; padding: 22px 24px 64px; }
+    .masthead { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:16px; border-bottom:1px solid var(--rule); }
+    .brand { display:flex; align-items:center; gap:11px; color:var(--ink); text-decoration:none; font-size:12px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+    .brand-mark { display:grid; grid-template-columns:repeat(2,8px); gap:3px; transform:rotate(-8deg); }
+    .brand-mark i { width:8px; height:8px; border-radius:50%; background:var(--green); }
+    .brand-mark i:nth-child(2) { background:var(--red); }
+    .brand-mark i:nth-child(3) { background:var(--gold); }
+    .brand-mark i:nth-child(4) { background:#3565a4; }
+    nav { display:flex; gap:4px; }
+    .nav-button { border:0; background:transparent; color:var(--muted); padding:9px 12px; font-size:13px; font-weight:800; cursor:pointer; }
+    .nav-button[aria-current="page"] { color:var(--green-dark); box-shadow:inset 0 -2px var(--green); }
+    .intro { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(230px,.7fr); gap:32px; align-items:end; padding:42px 0 34px; }
+    .eyebrow, .kicker { color:var(--green); font:800 11px/1.3 var(--mono); letter-spacing:.13em; text-transform:uppercase; }
+    h1 { max-width:700px; margin:10px 0 12px; font:700 60px/.98 var(--serif); }
+    .intro p { max-width:620px; margin:0; color:#46534c; font-size:16px; }
+    .question { border-left:3px solid var(--gold); padding:5px 0 5px 17px; font:700 19px/1.3 var(--serif); }
+    .question small { display:block; margin-top:9px; color:var(--muted); font:12px/1.4 "Trebuchet MS", sans-serif; }
+    .tabs { display:flex; gap:0; border-top:1px solid var(--rule); border-bottom:1px solid var(--rule); }
+    .view { display:none; padding-top:24px; }
+    .view.active { display:block; animation:appear .24s ease-out; }
+    @keyframes appear { from { opacity:.45; transform:translateY(4px); } to { opacity:1; transform:none; } }
+    .experiment-grid { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(260px,.75fr); gap:18px; align-items:start; }
+    .sheet { border:1px solid var(--rule); background:var(--card); padding:22px; }
+    .sheet.dark { color:#f8f6ec; background:#172a24; border-color:#172a24; }
+    .sheet h2 { margin:0 0 5px; font:700 25px/1.15 var(--serif); }
+    .sheet h3 { margin:0 0 10px; font-size:12px; letter-spacing:.09em; text-transform:uppercase; }
+    .copy { color:var(--muted); font-size:13px; }
+    .dark .copy { color:#c1cec5; }
+    .session-controls { display:flex; align-items:end; gap:12px; flex-wrap:wrap; margin-top:18px; padding-top:16px; border-top:1px solid #ffffff28; }
+    .field { display:grid; gap:4px; color:#d5e0d8; font-size:11px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; }
+    .field input { width:86px; border:1px solid #71857a; border-radius:0; padding:8px 9px; color:#fff; background:#203a30; }
+    .button { display:inline-flex; justify-content:center; align-items:center; gap:8px; min-height:40px; border:1px solid var(--green); background:var(--green); color:white; padding:8px 14px; font-size:12px; font-weight:900; letter-spacing:.04em; cursor:pointer; transition:background .15s, transform .15s; }
+    .button:hover:not(:disabled) { background:var(--green-dark); transform:translateY(-1px); }
+    .button:disabled { opacity:.42; cursor:not-allowed; }
+    .button.secondary { color:var(--green-dark); background:transparent; }
+    .button.secondary:hover:not(:disabled) { color:white; }
+    .button.light { background:#f6f1df; border-color:#f6f1df; color:#172a24; }
+    .button.light:hover:not(:disabled) { background:#fff; }
+    .button.small { min-height:34px; padding:6px 10px; }
+    .trial-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin:20px 0 10px; }
+    .trial-head strong { font:700 17px var(--serif); }
+    .trial-head span { color:var(--muted); font:11px var(--mono); }
+    .progress { height:4px; margin-bottom:18px; background:#dfe3d9; }
+    .progress span { display:block; width:0; height:100%; background:var(--gold); transition:width .25s ease; }
+    .sequence { display:flex; gap:9px; align-items:center; min-height:88px; padding:12px; border:1px dashed #b6c0b5; background:#f8f6ef; }
+    .slot { display:grid; place-items:center; flex:1; min-width:0; height:60px; border:1px solid #d5d9d0; background:#fffdf6; color:#87928a; font:11px var(--mono); }
+    .slot.filled { border:2px solid var(--green); color:var(--ink); font-size:22px; font-weight:900; }
+    .slot .slot-label { font-size:9px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
+    .sequence-separator { color:#aab2a9; font:16px var(--mono); }
+    .choices { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:8px; margin:14px 0; }
+    .choice { position:relative; min-width:0; border:1px solid #c9cec4; background:#fffdf6; padding:7px 4px; cursor:pointer; text-align:center; transition:transform .12s, border-color .12s; }
+    .choice:hover { transform:translateY(-2px); border-color:var(--green); }
+    .choice:disabled { opacity:.48; cursor:not-allowed; transform:none; }
+    .swatch { display:block; width:32px; height:32px; margin:0 auto 5px; border:1px solid #0002; border-radius:50%; }
+    .swatch.stripes { background:repeating-linear-gradient(135deg,#151515 0 5px,#fafafa 5px 10px); }
+    .choice b { display:block; font:800 11px var(--mono); }
+    .choice small { display:block; overflow:hidden; color:var(--muted); font-size:9px; text-overflow:ellipsis; white-space:nowrap; }
+    .actions { display:flex; flex-wrap:wrap; gap:8px; }
+    .status { min-height:24px; margin:12px 0 0; color:var(--muted); font-size:12px; }
+    .result { display:none; margin-top:16px; padding:14px; border-left:3px solid var(--gold); background:#f6f1df; }
+    .result.show { display:block; animation:appear .2s ease-out; }
+    .result b { font:700 20px var(--serif); }
+    .result p { margin:5px 0 0; color:#46534c; font-size:12px; }
+    .stats { display:grid; grid-template-columns:1fr 1fr; gap:1px; margin-top:18px; background:#ffffff32; border:1px solid #ffffff32; }
+    .stat { padding:13px; background:#172a24; }
+    .stat span { display:block; color:#bdcbbf; font:10px var(--mono); letter-spacing:.08em; text-transform:uppercase; }
+    .stat b { display:block; margin-top:5px; font:700 24px var(--serif); }
+    .side-note { margin-top:18px; padding-top:15px; border-top:1px solid #ffffff28; color:#d0dbd2; font-size:12px; }
+    .side-note strong { color:#f4c955; }
+    .section-heading { display:flex; justify-content:space-between; gap:16px; align-items:end; margin-bottom:16px; }
+    .section-heading h2 { margin:4px 0 0; font:700 32px var(--serif); }
+    .codebook { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+    .code-card { display:flex; align-items:center; gap:13px; min-height:82px; border:1px solid var(--rule); background:var(--card); padding:13px; }
+    .code-card .swatch { flex:0 0 42px; width:42px; height:42px; margin:0; }
+    .code-card b { display:block; font:700 16px var(--serif); }
+    .code-card small { color:var(--muted); font-size:11px; }
+    .protocol { display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--rule); background:var(--card); }
+    .protocol article { padding:19px; border-right:1px solid var(--rule); }
+    .protocol article:last-child { border:0; }
+    .protocol .number { display:block; margin-bottom:9px; color:var(--red); font:700 22px var(--serif); }
+    .protocol h3 { margin:0 0 6px; font-size:13px; }
+    .protocol p { margin:0; color:var(--muted); font-size:12px; }
+    .results-head { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px; }
+    .results-head h2 { margin:0; font:700 32px var(--serif); }
+    .results-numbers { display:grid; grid-template-columns:repeat(4,1fr); border:1px solid var(--rule); background:var(--card); }
+    .results-numbers div { padding:15px; border-right:1px solid var(--rule); }
+    .results-numbers div:last-child { border:0; }
+    .results-numbers span { display:block; color:var(--muted); font:10px var(--mono); text-transform:uppercase; }
+    .results-numbers b { display:block; margin-top:5px; font:700 23px var(--serif); }
+    .probability { margin:14px 0; padding:14px 16px; border-left:3px solid var(--green); background:#e5ebe1; font-size:13px; }
+    .probability strong { color:var(--green-dark); }
+    .table-wrap { overflow:auto; max-height:380px; border:1px solid var(--rule); background:var(--card); }
+    table { width:100%; border-collapse:collapse; text-align:left; font-size:12px; }
+    th,td { padding:9px 11px; border-bottom:1px solid #e0e3db; white-space:nowrap; }
+    th { position:sticky; top:0; background:#e9ece3; color:#4b5a50; font:10px var(--mono); text-transform:uppercase; }
+    .hit { color:var(--green); font-weight:900; }
+    .footer { display:flex; justify-content:space-between; gap:18px; margin-top:26px; padding-top:13px; border-top:1px solid var(--rule); color:var(--muted); font-size:11px; }
+    .footer a { color:var(--green-dark); font-weight:800; }
+    :focus-visible { outline:3px solid #e2a820; outline-offset:3px; }
+    @media (max-width:760px) {
+      .shell { padding:15px 15px 42px; }
+      .intro { grid-template-columns:1fr; gap:18px; padding:31px 0 23px; }
+      h1 { font-size:52px; }
+      .question { max-width:420px; }
+      .experiment-grid { grid-template-columns:1fr; }
+      .codebook { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .protocol { grid-template-columns:1fr; }
+      .protocol article { border-right:0; border-bottom:1px solid var(--rule); }
+      .protocol article:last-child { border-bottom:0; }
+    }
+    @media (max-width:500px) {
+      h1 { font-size:42px; }
+      .masthead { align-items:flex-start; flex-direction:column; gap:10px; }
+      nav { width:100%; justify-content:space-between; }
+      .nav-button { padding:8px 6px; font-size:12px; }
+      .sheet { padding:17px; }
+      .choices { gap:5px; }
+      .choice { padding:6px 2px; }
+      .swatch { width:27px; height:27px; }
+      .choice small { font-size:8px; }
+      .codebook { gap:7px; }
+      .code-card { gap:9px; min-height:72px; padding:9px; }
+      .code-card .swatch { flex-basis:34px; width:34px; height:34px; }
+      .results-numbers { grid-template-columns:repeat(2,1fr); }
+      .results-numbers div:nth-child(2) { border-right:0; }
+      .results-numbers div:nth-child(-n+2) { border-bottom:1px solid var(--rule); }
+      .footer { flex-direction:column; gap:4px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <a class="brand" href="#experiment" aria-label="Six Sense Lab home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span> Six Sense Lab</a>
+      <nav aria-label="Main navigation">
+        <button class="nav-button" data-view="experiment" aria-current="page">Experiment</button>
+        <button class="nav-button" data-view="learn">Learn the code</button>
+        <button class="nav-button" data-view="method">Method</button>
+        <button class="nav-button" data-view="results">Your results</button>
+      </nav>
+    </header>
+
+    <section class="intro" id="experiment">
+      <div>
+        <div class="eyebrow">A small experiment anyone can run</div>
+        <h1>Can you call the colours?</h1>
+        <p>Learn a simple code, lock in a three-colour prediction, and see what happens when chance makes the next sequence. Your answer is sealed before the draw.</p>
+      </div>
+      <div class="question">Could intuition beat 1 in 120?<small>No pressure to believe. Just make a prediction, collect the data, and stay curious.</small></div>
+    </section>
+
+    <main>
+      <section class="view active" id="view-experiment" aria-labelledby="experiment-title">
+        <div class="experiment-grid">
+          <div class="sheet dark">
+            <div class="kicker">The prediction desk</div>
+            <h2 id="experiment-title">Pick the next three</h2>
+            <p class="copy">Choose three different numbers in the order you think they'll appear. Once you lock your answer, a fresh sequence is drawn.</p>
+            <div class="session-controls" id="startControls">
+              <label class="field" for="trialCount">Rounds <input id="trialCount" type="number" min="1" max="200" value="20"></label>
+              <button class="button light" id="startButton">Start a session <span aria-hidden="true">→</span></button>
+              <span class="copy">1–200 rounds</span>
+            </div>
+            <div id="playArea" hidden>
+              <div class="trial-head"><strong id="trialLabel">Round 1</strong><span id="trialCountLabel">1 / 20</span></div>
+              <div class="progress" aria-label="Session progress"><span id="progressBar"></span></div>
+              <div class="sequence" id="guessSlots" aria-label="Your prediction"></div>
+              <div class="choices" id="choices" aria-label="Choose a colour number"></div>
+              <div class="actions">
+                <button class="button" id="lockButton" disabled>Lock my prediction</button>
+                <button class="button light" id="undoButton" disabled>Undo last</button>
+                <button class="button light" id="clearGuessButton" disabled>Clear</button>
+                <button class="button secondary" id="nextButton" hidden>Next round →</button>
+                <button class="button secondary" id="newSessionButton" hidden>New session</button>
+              </div>
+              <p class="status" id="gameStatus" aria-live="polite">Choose three different numbers in order.</p>
+              <div class="result" id="roundResult" aria-live="polite"></div>
+            </div>
+          </div>
+          <aside class="sheet">
+            <div class="kicker">The question</div>
+            <h2>Signal or chance?</h2>
+            <p class="copy">Each round asks for one exact ordered sequence from 120 possibilities. A lucky run can happen; the useful question is whether results across many rounds look unusual under chance.</p>
+            <div class="stats">
+              <div class="stat"><span>Exact hits</span><b id="hitCount">0</b></div>
+              <div class="stat"><span>Rounds done</span><b id="doneCount">0</b></div>
+            </div>
+            <div class="side-note"><strong>Fairness check:</strong> your prediction is recorded first. The target is generated only after you press “Lock my prediction.”</div>
+            <div class="side-note">Your data stays in this browser. No account, tracking, or personal details.</div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="view" id="view-learn" aria-labelledby="learn-title">
+        <div class="section-heading"><div><div class="kicker">Before you play</div><h2 id="learn-title">Learn the colour code</h2></div><p class="copy">Same six runners, every round.</p></div>
+        <div class="codebook" id="codebook"></div>
+        <div class="sheet" style="margin-top:16px"><h3>Try a practice sequence</h3><p class="copy">Say the numbers and colours together: for example, “2 blue, 5 orange, 1 red.” Practice is just practice; it is not counted in your results.</p></div>
+      </section>
+
+      <section class="view" id="view-method" aria-labelledby="method-title">
+        <div class="section-heading"><div><div class="kicker">Open method</div><h2 id="method-title">How this test works</h2></div></div>
+        <div class="protocol">
+          <article><span class="number">01</span><h3>Make a prediction</h3><p>Choose an ordered sequence of three distinct numbers from 1 to 6. The codebook maps each number to a colour.</p></article>
+          <article><span class="number">02</span><h3>Lock before the draw</h3><p>Your guess is fixed before the app uses the browser's cryptographic random-number generator to choose three distinct numbers uniformly at random.</p></article>
+          <article><span class="number">03</span><h3>Compare honestly</h3><p>An exact ordered match has chance probability 1/120 per round. Partial matches are shown for interest, but exact matches are the primary outcome.</p></article>
+        </div>
+        <div class="sheet" style="margin-top:14px">
+          <h3>What this can and cannot tell us</h3>
+          <p class="copy">This is an exploratory, self-run demonstration, not proof of ESP or a clinical or peer-reviewed study. Chance predicts an average of one exact hit per 120 rounds; short sessions naturally fluctuate. The displayed probability is the chance, under the stated random model, of getting at least this many exact hits, assuming the total number of rounds was fixed in advance. It is not the probability that ESP is real. Repeatedly checking results or choosing when to stop makes it unsuitable as confirmatory evidence.</p>
+          <p class="copy">The source is open for inspection, and the target is drawn only after each submitted guess. This browser-only version is not tamper-proof: a participant can modify local code or data. Treat exported results as self-reported. A confirmatory study would need a preregistered protocol, independent oversight, and server-side or otherwise audited randomization.</p>
+        </div>
+      </section>
+
+      <section class="view" id="view-results" aria-labelledby="results-title">
+        <div class="results-head"><div><div class="kicker">Your local data</div><h2 id="results-title">Results, not vibes</h2></div><div class="actions"><button class="button small" id="exportButton">Export JSON</button><button class="button small secondary" id="resetButton">Clear results</button></div></div>
+        <div class="results-numbers">
+          <div><span>Rounds</span><b id="resultTrials">0</b></div>
+          <div><span>Exact hits</span><b id="resultHits">0</b></div>
+          <div><span>Expected at chance</span><b id="expectedHits">0.00</b></div>
+          <div><span>Exact hit rate</span><b id="hitRate">—</b></div>
+        </div>
+        <div class="probability" id="probabilityLine">Complete a round to see the chance comparison.</div>
+        <p class="copy">The probability shown is a one-sided binomial tail using p = 1/120. It assumes independent, fair draws and is descriptive, not a verdict about ESP.</p>
+        <div class="table-wrap"><table><thead><tr><th>Round</th><th>Your guess</th><th>Drawn sequence</th><th>Numbers in right place</th><th>Exact?</th><th>Recorded (UTC)</th></tr></thead><tbody id="resultRows"><tr><td colspan="6">No rounds recorded yet.</td></tr></tbody></table></div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>Open experiment · no sign-in · your data stays on your device</span><span>Read the <a href="README.md">project README</a> for the invitation and full protocol.</span></footer>
+  </div>
+  <script>
+    "use strict";
+    const CODE = [
+      { number: 1, name: "Red", color: "#c1121f" },
+      { number: 2, name: "Blue", color: "#1d4ed8" },
+      { number: 3, name: "White", color: "#f4f4f5", dark: true },
+      { number: 4, name: "Black", color: "#111111" },
+      { number: 5, name: "Orange", color: "#ea580c" },
+      { number: 6, name: "Stripes", pattern: true }
+    ];
+    const STORAGE_KEY = "sixSenseLab.results.v1";
+    const SESSION_KEY = "sixSenseLab.session.v1";
+    const CHANCE = 1 / 120;
+    const state = { results: load(STORAGE_KEY, []), session: load(SESSION_KEY, null), guess: [] };
+    const $ = id => document.getElementById(id);
+    const codeFor = number => CODE[number - 1];
+    const sequenceText = sequence => sequence.map(number => `${number} ${codeFor(number).name.toLowerCase()}`).join(" · ");
+
+    function load(key, fallback) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key));
+        return value ?? fallback;
+      } catch { return fallback; }
+    }
+    function save() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.results));
+      localStorage.setItem(SESSION_KEY, JSON.stringify(state.session));
+    }
+    function randomInt(max) {
+      const limit = Math.floor(0x100000000 / max) * max;
+      const value = new Uint32Array(1);
+      do { crypto.getRandomValues(value); } while (value[0] >= limit);
+      return value[0] % max;
+    }
+    function randomTarget() {
+      const numbers = [1, 2, 3, 4, 5, 6];
+      for (let index = numbers.length - 1; index > 0; index--) {
+        const other = randomInt(index + 1);
+        [numbers[index], numbers[other]] = [numbers[other], numbers[index]];
+      }
+      return numbers.slice(0, 3);
+    }
+    function makeSwatch(item) {
+      const swatch = document.createElement("span");
+      swatch.className = "swatch" + (item.pattern ? " stripes" : "");
+      if (item.color) swatch.style.backgroundColor = item.color;
+      if (item.dark) swatch.style.borderColor = "#777";
+      return swatch;
+    }
+    function renderCodebook() {
+      const book = $("codebook");
+      book.replaceChildren();
+      CODE.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "code-card";
+        card.append(makeSwatch(item));
+        const description = document.createElement("div");
+        const name = document.createElement("b");
+        name.textContent = `${item.number} · ${item.name}`;
+        const note = document.createElement("small");
+        note.textContent = item.number === 6 ? "Black and white stripes" : `${item.name} runner`;
+        description.append(name, note);
+        card.append(description);
+        book.append(card);
+      });
+    }
+    function renderSlots() {
+      const slots = $("guessSlots");
+      slots.replaceChildren();
+      for (let index = 0; index < 3; index++) {
+        const slot = document.createElement("div");
+        slot.className = "slot" + (state.guess[index] ? " filled" : "");
+        if (state.guess[index]) {
+          slot.append(makeSwatch(codeFor(state.guess[index])));
+          slot.setAttribute("aria-label", `Place ${index + 1}: number ${state.guess[index]}, ${codeFor(state.guess[index]).name}`);
+        } else {
+          slot.innerHTML = `<span class="slot-label">${["1st", "2nd", "3rd"][index]}</span>`;
+          slot.setAttribute("aria-label", `Place ${index + 1}, empty`);
+        }
+        slots.append(slot);
+        if (index < 2) {
+          const separator = document.createElement("span");
+          separator.className = "sequence-separator";
+          separator.textContent = "→";
+          separator.setAttribute("aria-hidden", "true");
+          slots.append(separator);
+        }
+      }
+      $("lockButton").disabled = state.guess.length !== 3 || !state.session || state.session.revealed;
+      $("undoButton").disabled = !state.guess.length || !state.session || state.session.revealed;
+      $("clearGuessButton").disabled = !state.guess.length || !state.session || state.session.revealed;
+      CODE.forEach(item => {
+        const button = document.querySelector(`[data-number="${item.number}"]`);
+        if (button) button.disabled = !state.session || state.session.revealed || state.guess.includes(item.number) || state.guess.length === 3;
+      });
+    }
+    function startSession() {
+      const requested = Number($("trialCount").value);
+      const total = Math.max(1, Math.min(200, Number.isFinite(requested) ? requested : 20));
+      $("trialCount").value = String(total);
+      state.session = { total, completed: 0, revealed: false };
+      state.guess = [];
+      $("startControls").hidden = true;
+      $("playArea").hidden = false;
+      $("roundResult").classList.remove("show");
+      $("gameStatus").textContent = "Choose three different numbers in order.";
+      renderGame();
+      save();
+    }
+    function renderGame() {
+      if (!state.session) return;
+      const { total, completed, revealed } = state.session;
+      $("trialLabel").textContent = completed >= total ? "Session complete" : `Round ${completed + 1}`;
+      $("trialCountLabel").textContent = `${Math.min(completed + (revealed ? 0 : 1), total)} / ${total}`;
+      $("progressBar").style.width = `${100 * completed / total}%`;
+      $("nextButton").hidden = !revealed || completed >= total;
+      $("newSessionButton").hidden = completed < total;
+      $("gameStatus").textContent = completed >= total ? "That's the session. Your results are ready." : revealed ? "Prediction locked. The draw is recorded below." : "Choose three different numbers in order.";
+      renderSlots();
+      renderSummary();
+      if (completed >= total) {
+        $("choices").querySelectorAll("button").forEach(button => { button.disabled = true; });
+      }
+    }
+    function renderSummary() {
+      const exactHits = state.results.filter(result => result.exact).length;
+      $("hitCount").textContent = String(exactHits);
+      $("doneCount").textContent = String(state.results.length);
+      renderResults();
+    }
+    function submitGuess() {
+      if (!state.session || state.session.revealed || state.guess.length !== 3) return;
+      const guess = state.guess.slice();
+      const target = randomTarget();
+      const rightPlaces = guess.reduce((count, number, index) => count + (number === target[index] ? 1 : 0), 0);
+      const result = {
+        round: state.results.length + 1,
+        guess,
+        target,
+        rightPlaces,
+        exact: rightPlaces === 3,
+        timestamp: new Date().toISOString(),
+        rng: "crypto.getRandomValues",
+        protocol: "six-sense-v1"
+      };
+      state.results.push(result);
+      state.session.completed += 1;
+      state.session.revealed = true;
+      save();
+      const panel = $("roundResult");
+      panel.innerHTML = `<b>${result.exact ? "Exact hit" : `${rightPlaces} of 3 in the right place`}</b><p>Your guess: ${sequenceText(guess)}<br>Drawn sequence: ${sequenceText(target)}</p>`;
+      panel.classList.add("show");
+      renderGame();
+    }
+    function nextRound() {
+      if (!state.session || !state.session.revealed) return;
+      state.session.revealed = false;
+      state.guess = [];
+      $("roundResult").classList.remove("show");
+      renderGame();
+      save();
+    }
+    function binomialTail(trials, hits, probability) {
+      if (hits <= 0) return 1;
+      if (hits > trials) return 0;
+      let term = Math.pow(1 - probability, trials);
+      let tail = 0;
+      for (let count = 0; count <= trials; count++) {
+        if (count >= hits) tail += term;
+        if (count < trials) term *= ((trials - count) / (count + 1)) * (probability / (1 - probability));
+      }
+      return Math.min(1, tail);
+    }
+    function renderResults() {
+      const rows = $("resultRows");
+      const count = state.results.length;
+      const hits = state.results.filter(result => result.exact).length;
+      $("resultTrials").textContent = String(count);
+      $("resultHits").textContent = String(hits);
+      $("expectedHits").textContent = (count * CHANCE).toFixed(2);
+      $("hitRate").textContent = count ? `${(100 * hits / count).toFixed(1)}%` : "—";
+      if (!count) {
+        rows.innerHTML = '<tr><td colspan="6">No rounds recorded yet.</td></tr>';
+        $("probabilityLine").textContent = "Complete a round to see the chance comparison.";
+        return;
+      }
+      const probability = binomialTail(count, hits, CHANCE);
+      $("probabilityLine").innerHTML = `<strong>${hits} exact ${hits === 1 ? "hit" : "hits"} in ${count} rounds.</strong> If every draw is fair and independent, and this total was fixed in advance, the chance of at least this many exact hits is ${(100 * probability).toPrecision(3)}%.`;
+      rows.replaceChildren();
+      state.results.slice().reverse().forEach(result => {
+        const row = document.createElement("tr");
+        const values = [result.round, result.guess.join("–"), result.target.join("–"), `${result.rightPlaces}/3`, result.exact ? "Yes" : "No", result.timestamp.replace("T", " ").replace("Z", "")];
+        values.forEach((value, index) => {
+          const cell = document.createElement("td");
+          cell.textContent = String(value);
+          if (index === 4 && result.exact) cell.className = "hit";
+          row.append(cell);
+        });
+        rows.append(row);
+      });
+    }
+    function showView(name) {
+      document.querySelectorAll(".view").forEach(view => view.classList.toggle("active", view.id === `view-${name}`));
+      document.querySelectorAll(".nav-button").forEach(button => {
+        if (button.dataset.view === name) button.setAttribute("aria-current", "page");
+        else button.removeAttribute("aria-current");
+      });
+      if (name === "results") renderResults();
+    }
+    function exportResults() {
+      const payload = {
+        project: "Six Sense Lab",
+        protocol: "six-sense-v1",
+        exportedAt: new Date().toISOString(),
+        chanceExactHitPerRound: CHANCE,
+        session: state.session,
+        results: state.results
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "six-sense-lab-results.json";
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    function resetResults() {
+      if (!state.results.length && !state.session) return;
+      if (!window.confirm("Clear all saved rounds and the current session from this browser? This cannot be undone.")) return;
+      state.results = [];
+      state.session = null;
+      state.guess = [];
+      save();
+      $("startControls").hidden = false;
+      $("playArea").hidden = true;
+      renderSummary();
+    }
+
+    const choices = $("choices");
+    CODE.forEach(item => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "choice";
+      button.dataset.number = String(item.number);
+      button.setAttribute("aria-label", `Choose ${item.number}, ${item.name}`);
+      button.append(makeSwatch(item));
+      const number = document.createElement("b");
+      number.textContent = String(item.number);
+      const name = document.createElement("small");
+      name.textContent = item.name;
+      button.append(number, name);
+      button.addEventListener("click", () => {
+        if (!state.session || state.session.revealed || state.guess.length >= 3 || state.guess.includes(item.number)) return;
+        state.guess.push(item.number);
+        renderSlots();
+      });
+      choices.append(button);
+    });
+    document.querySelectorAll(".nav-button").forEach(button => button.addEventListener("click", () => showView(button.dataset.view)));
+    $("startButton").addEventListener("click", startSession);
+    $("lockButton").addEventListener("click", submitGuess);
+    $("nextButton").addEventListener("click", nextRound);
+    $("newSessionButton").addEventListener("click", startSession);
+    $("undoButton").addEventListener("click", () => { state.guess.pop(); renderSlots(); });
+    $("clearGuessButton").addEventListener("click", () => { state.guess = []; renderSlots(); });
+    $("exportButton").addEventListener("click", exportResults);
+    $("resetButton").addEventListener("click", resetResults);
+
+    renderCodebook();
+    renderSummary();
+    if (state.session && state.session.completed < state.session.total) {
+      $("startControls").hidden = true;
+      $("playArea").hidden = false;
+      if (state.session.revealed) {
+        const last = state.results[state.results.length - 1];
+        if (last) {
+          const panel = $("roundResult");
+          panel.innerHTML = `<b>${last.exact ? "Exact hit" : `${last.rightPlaces} of 3 in the right place`}</b><p>Your guess: ${sequenceText(last.guess)}<br>Drawn sequence: ${sequenceText(last.target)}</p>`;
+          panel.classList.add("show");
+        }
+      }
+      renderGame();
+    } else if (state.session && state.session.completed >= state.session.total) {
+      $("startControls").hidden = true;
+      $("playArea").hidden = false;
+      $("trialLabel").textContent = "Session complete";
+      $("trialCountLabel").textContent = `${state.session.total} / ${state.session.total}`;
+      $("progressBar").style.width = "100%";
+      $("gameStatus").textContent = "That's the session. Your results are ready.";
+      $("newSessionButton").hidden = false;
+      renderSlots();
+    }
+  </script>
+</body>
+</html>
