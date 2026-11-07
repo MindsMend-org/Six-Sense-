@@ -1,5 +1,8 @@
 # Six Sense Lab
 
+[All is mind]
+Hypothesis: The subconscious mind knows all things, the conscious mind covers it up. Can we train both subconscious & conscious to work as one? I believe we all can.
+
 ## Could you predict the next three?
 
 Welcome to a tiny open experiment in intuition, memory, and chance. Learn six colour codes, make an ordered prediction, and see how it compares with a sequence drawn only after your guess is locked.
